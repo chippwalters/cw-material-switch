@@ -1,8 +1,8 @@
 bl_info = {
-    "name": "cw-Material Switch",
+    "name": "Material Toggle Addon",
     "blender": (4, 3, 0),
-    "category": "Tool", 
-    "author": "Chipp Walters",
+    "category": "Tool",
+    "author": "Your Name",
     "version": (1, 0, 0),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
@@ -130,6 +130,9 @@ def register():
     bpy.utils.register_class(VIEW3D_PT_material_toggle_panel)
     bpy.types.Scene.toggle_material_state = bpy.props.StringProperty(default="ORIGINAL")
     load_cw_white_material()
+
+    # Ensure the addon starts with the Original button highlighted
+    bpy.context.scene.toggle_material_state = "ORIGINAL"
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_original_material)
