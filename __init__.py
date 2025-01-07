@@ -13,22 +13,6 @@ import inspect
 
 # Load the "cw-white" material from the same directory as the Blender script file
 
-def load_cw_white_material():
-    script_path = os.path.abspath(inspect.getfile(lambda: None))
-    print(f"Current script file path: {script_path}")
-    blend_dir = os.path.dirname(script_path)
-    blend_file_path = os.path.join(blend_dir, "cw-white.blend")
-    print(f"Attempting to load blend file from: {blend_file_path}")
-    material_name = "cw-white"
-    
-    if os.path.exists(blend_file_path):
-        with bpy.data.libraries.load(blend_file_path, link=False) as (data_from, data_to):
-            if material_name in data_from.materials:
-                data_to.materials = [material_name]
-            else:
-                print(f"Material '{material_name}' not found in '{blend_file_path}'.")
-    else:
-        print(f"Blend file not found: {blend_file_path}")
 
 # Operator for Original Material
 class OBJECT_OT_original_material(bpy.types.Operator):
@@ -80,7 +64,7 @@ class OBJECT_OT_white_material(bpy.types.Operator):
     def execute(self, context):
         white_mat = bpy.data.materials.get("cw-white")
         if white_mat is None:
-            white_mat = load_cw_white_material()
+            white_mat = self.create_white_material()
 
         for obj in bpy.data.objects:
             if obj.type == 'MESH':
@@ -95,6 +79,22 @@ class OBJECT_OT_white_material(bpy.types.Operator):
 
         context.scene.toggle_material_state = 'WHITE'
         return {'FINISHED'}
+    
+    def create_white_material(self):
+        white_mat = bpy.data.materials.new(name="cw-white")
+        white_mat.use_nodes = True
+        bsdf = white_mat.node_tree.nodes.get('Principled BSDF')
+        
+        # Set Base Color to white
+        bsdf.inputs['Base Color'].default_value = (1, 1, 1, 1)
+        
+        # Blender 4.3 compatibility check for the 'Specular' input
+        #if "Specular" in bsdf.inputs:
+        bsdf.inputs[13].default_value = 0.0
+        
+        # Set roughness for a matte finish
+        bsdf.inputs['Roughness'].default_value = 1.0
+        return white_mat
 
 # UI Panel with three buttons and a dropdown for custom material
 class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
@@ -129,7 +129,6 @@ def register():
     bpy.utils.register_class(OBJECT_OT_white_material)
     bpy.utils.register_class(VIEW3D_PT_material_toggle_panel)
     bpy.types.Scene.toggle_material_state = bpy.props.StringProperty(default="ORIGINAL")
-    load_cw_white_material()
 
 
 def unregister():
