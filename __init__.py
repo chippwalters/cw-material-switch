@@ -3,16 +3,12 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 0),
+    "version": (1, 0, 3),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
 import bpy
-import os
 import inspect
-
-# Load the "cw-white" material from the same directory as the Blender script file
-
 
 # Operator for Original Material
 class OBJECT_OT_original_material(bpy.types.Operator):
@@ -89,7 +85,6 @@ class OBJECT_OT_white_material(bpy.types.Operator):
         bsdf.inputs['Base Color'].default_value = (1, 1, 1, 1)
         
         # Blender 4.3 compatibility check for the 'Specular' input
-        #if "Specular" in bsdf.inputs:
         bsdf.inputs[13].default_value = 0.0
         
         # Set roughness for a matte finish
@@ -103,24 +98,32 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = 'Tool'
+    
+    is_first_time = True
 
     def draw(self, context):
+        is_first_time = True
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("object.original_material", depress=(context.scene.get('toggle_material_state') == 'ORIGINAL'))
-        row.operator("object.white_material", depress=(context.scene.get('toggle_material_state') == 'WHITE'))
-        row.operator("object.custom_material", depress=(context.scene.get('toggle_material_state') == 'CUSTOM'))
+#        row.operator("object.original_material", depress=(context.scene.get('toggle_material_state') == 'ORIGINAL')) 
+        row.operator("object.original_material", depress=(context.scene.toggle_material_state == 'ORIGINAL'))           
+        row.operator("object.white_material", depress=(context.scene.toggle_material_state == 'WHITE'))
+        row.operator("object.custom_material", depress=(context.scene.toggle_material_state == 'CUSTOM'))
         layout.prop(context.scene, "custom_material", text="Custom Material")
         layout.label(text="*only save scene in Orig mode")
 
 # Function to dynamically update the material list
+
+def update_custom_material(self, context):
+    bpy.ops.object.custom_material()
 
 def get_material_list(self, context):
     return [(mat.name, mat.name, "Select this material") for mat in bpy.data.materials]
 
 bpy.types.Scene.custom_material = bpy.props.EnumProperty(
     name="Custom Material",
-    items=get_material_list
+    items=get_material_list,
+    update=update_custom_material
 )
 
 # Registration
