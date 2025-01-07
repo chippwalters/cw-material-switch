@@ -131,16 +131,12 @@ def register():
     bpy.types.Scene.toggle_material_state = bpy.props.StringProperty(default="ORIGINAL")
     load_cw_white_material()
 
-    # Ensure the addon starts with the Original button highlighted
-    bpy.context.scene.toggle_material_state = "ORIGINAL"
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_original_material)
     bpy.utils.unregister_class(OBJECT_OT_custom_material)
     bpy.utils.unregister_class(OBJECT_OT_white_material)
     bpy.utils.unregister_class(VIEW3D_PT_material_toggle_panel)
-    del bpy.types.Scene.toggle_material_state
-    del bpy.types.Scene.custom_material
 
 if __name__ == "__main__":
     register()
