@@ -3,7 +3,7 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 4),
+    "version": (1, 0, 5),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
@@ -91,6 +91,7 @@ class OBJECT_OT_white_material(bpy.types.Operator):
     
     def create_white_material(self):
         white_mat = bpy.data.materials.new(name="cw-white")
+        white_mat.use_fake_user = True
         white_mat.use_nodes = True
         bsdf = white_mat.node_tree.nodes.get('Principled BSDF')
         
@@ -111,8 +112,6 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = 'Tool'
-    
-    is_first_time = True
 
     def draw(self, context):
         is_first_time = True
@@ -126,7 +125,13 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
 # Function to dynamically update the material list
 
 def update_custom_material(self, context):
-    bpy.ops.object.custom_material()
+    custom_mat = bpy.data.materials.get(self.custom_material)
+    if custom_mat:
+        for obj in bpy.data.objects:
+            if obj.type == 'MESH':
+                obj.data.materials.clear()
+                obj.data.materials.append(custom_mat)
+
 
 def get_material_list(self, context):
     return [(mat.name, mat.name, "Select this material") for mat in bpy.data.materials]
@@ -151,6 +156,8 @@ def unregister():
     bpy.utils.unregister_class(OBJECT_OT_custom_material)
     bpy.utils.unregister_class(OBJECT_OT_white_material)
     bpy.utils.unregister_class(VIEW3D_PT_material_toggle_panel)
+    del bpy.types.Scene.toggle_material_state
+    del bpy.types.Scene.custom_material
 
 if __name__ == "__main__":
     register()
