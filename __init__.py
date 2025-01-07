@@ -2,7 +2,7 @@ bl_info = {
     "name": "Material Toggle Addon",
     "blender": (4, 3, 0),
     "category": "Tool",
-    "author": "Your Name",
+    "author": "Chipp Walters",
     "version": (1, 0, 0),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
@@ -111,6 +111,7 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
         row.operator("object.white_material", depress=(context.scene.get('toggle_material_state') == 'WHITE'))
         row.operator("object.custom_material", depress=(context.scene.get('toggle_material_state') == 'CUSTOM'))
         layout.prop(context.scene, "custom_material", text="Custom Material")
+        layout.label(text="*only save scene in Orig mode")
 
 # Function to dynamically update the material list
 
