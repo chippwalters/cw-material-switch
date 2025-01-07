@@ -3,7 +3,7 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 3),
+    "version": (1, 0, 4),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
@@ -19,6 +19,11 @@ class OBJECT_OT_original_material(bpy.types.Operator):
     def execute(self, context):
         for obj in bpy.data.objects:
             if obj.type == 'MESH' and "original_material" in obj and "face_material_indices" in obj:
+                for mat_name in obj["original_material"]:
+                    mat = bpy.data.materials.get(mat_name)
+                    if mat:
+                        mat.use_fake_user = False
+
                 obj.data.materials.clear()
                 for mat_name in obj["original_material"]:
                     mat = bpy.data.materials.get(mat_name)
@@ -43,6 +48,10 @@ class OBJECT_OT_custom_material(bpy.types.Operator):
                     if context.scene.toggle_material_state == 'ORIGINAL':
                         obj["original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
                         obj["face_material_indices"] = [poly.material_index for poly in obj.data.polygons]
+                        for mat_name in obj["original_material"]:
+                            mat = bpy.data.materials.get(mat_name)
+                            if mat:
+                                mat.use_fake_user = True
 
                     obj.data.materials.clear()
                     obj.data.materials.append(custom_mat)
@@ -67,6 +76,10 @@ class OBJECT_OT_white_material(bpy.types.Operator):
                 if context.scene.toggle_material_state == 'ORIGINAL':
                     obj["original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
                     obj["face_material_indices"] = [poly.material_index for poly in obj.data.polygons]
+                    for mat_name in obj["original_material"]:
+                        mat = bpy.data.materials.get(mat_name)
+                        if mat:
+                            mat.use_fake_user = True
 
                 obj.data.materials.clear()
                 obj.data.materials.append(white_mat)
@@ -105,12 +118,10 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
         is_first_time = True
         layout = self.layout
         row = layout.row(align=True)
-#        row.operator("object.original_material", depress=(context.scene.get('toggle_material_state') == 'ORIGINAL')) 
         row.operator("object.original_material", depress=(context.scene.toggle_material_state == 'ORIGINAL'))           
         row.operator("object.white_material", depress=(context.scene.toggle_material_state == 'WHITE'))
         row.operator("object.custom_material", depress=(context.scene.toggle_material_state == 'CUSTOM'))
         layout.prop(context.scene, "custom_material", text="Custom Material")
-        layout.label(text="*only save scene in Orig mode")
 
 # Function to dynamically update the material list
 
