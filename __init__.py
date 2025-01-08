@@ -3,7 +3,7 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 6),
+    "version": (1, 0, 10),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
@@ -45,6 +45,8 @@ class OBJECT_OT_custom_material(bpy.types.Operator):
         if custom_mat:
             for obj in bpy.data.objects:
                 if obj.type == 'MESH':
+                    if "_is_override" in obj and obj["_is_override"]:
+                        continue
                     if context.scene.toggle_material_state == 'ORIGINAL':
                         obj["original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
                         obj["face_material_indices"] = [poly.material_index for poly in obj.data.polygons]
@@ -73,6 +75,8 @@ class OBJECT_OT_white_material(bpy.types.Operator):
 
         for obj in bpy.data.objects:
             if obj.type == 'MESH':
+                if "_is_override" in obj and obj["_is_override"]:
+                    continue
                 if context.scene.toggle_material_state == 'ORIGINAL':
                     obj["original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
                     obj["face_material_indices"] = [poly.material_index for poly in obj.data.polygons]
@@ -105,6 +109,7 @@ class OBJECT_OT_white_material(bpy.types.Operator):
         bsdf.inputs['Roughness'].default_value = 1.0
         return white_mat
 
+
 # Operator for Toggle Material Button
 class OBJECT_OT_toggle_material(bpy.types.Operator):
     bl_idname = "object.toggle_material"
@@ -130,11 +135,13 @@ class OBJECT_OT_toggle_material(bpy.types.Operator):
                             obj.data.materials.append(mat)
                     for poly, mat_index in zip(obj.data.polygons, obj["face_material_indices"]):
                         poly.material_index = mat_index
+                    obj["_is_override"] = True
             else:
                 obj.data.materials.clear()
                 obj.data.materials.append(white_mat)
                 for poly in obj.data.polygons:
                     poly.material_index = 0
+                obj["_is_override"] = False
 
         elif context.scene.toggle_material_state == 'CUSTOM':
             if obj.active_material and obj.active_material == custom_mat:
@@ -146,18 +153,18 @@ class OBJECT_OT_toggle_material(bpy.types.Operator):
                             obj.data.materials.append(mat)
                     for poly, mat_index in zip(obj.data.polygons, obj["face_material_indices"]):
                         poly.material_index = mat_index
+                    obj["_is_override"] = True
             else:
                 obj.data.materials.clear()
                 obj.data.materials.append(custom_mat)
                 for poly in obj.data.polygons:
                     poly.material_index = 0
+                obj["_is_override"] = False
 
+#        print(f"is_override: {obj['_is_override']}")
         self.report({'INFO'}, "Toggle Material executed")
         return {'FINISHED'}
 
-# Registration and UI code remain unchanged.
-
-# Registration and UI code remain unchanged.
 
 
 # UI Panel with three buttons and a dropdown for custom material
