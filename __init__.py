@@ -3,7 +3,7 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 5),
+    "version": (1, 0, 6),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
@@ -105,6 +105,61 @@ class OBJECT_OT_white_material(bpy.types.Operator):
         bsdf.inputs['Roughness'].default_value = 1.0
         return white_mat
 
+# Operator for Toggle Material Button
+class OBJECT_OT_toggle_material(bpy.types.Operator):
+    bl_idname = "object.toggle_material"
+    bl_label = "Toggle Material"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'MESH' and context.scene.toggle_material_state in {'WHITE', 'CUSTOM'}
+
+    def execute(self, context):
+        obj = context.active_object
+        white_mat = bpy.data.materials.get("cw-white")
+        custom_mat = bpy.data.materials.get(context.scene.custom_material)
+
+        if context.scene.toggle_material_state == 'WHITE':
+            if obj.active_material and obj.active_material.name == "cw-white":
+                if "original_material" in obj and "face_material_indices" in obj:
+                    obj.data.materials.clear()
+                    for mat_name in obj["original_material"]:
+                        mat = bpy.data.materials.get(mat_name)
+                        if mat:
+                            obj.data.materials.append(mat)
+                    for poly, mat_index in zip(obj.data.polygons, obj["face_material_indices"]):
+                        poly.material_index = mat_index
+            else:
+                obj.data.materials.clear()
+                obj.data.materials.append(white_mat)
+                for poly in obj.data.polygons:
+                    poly.material_index = 0
+
+        elif context.scene.toggle_material_state == 'CUSTOM':
+            if obj.active_material and obj.active_material == custom_mat:
+                if "original_material" in obj and "face_material_indices" in obj:
+                    obj.data.materials.clear()
+                    for mat_name in obj["original_material"]:
+                        mat = bpy.data.materials.get(mat_name)
+                        if mat:
+                            obj.data.materials.append(mat)
+                    for poly, mat_index in zip(obj.data.polygons, obj["face_material_indices"]):
+                        poly.material_index = mat_index
+            else:
+                obj.data.materials.clear()
+                obj.data.materials.append(custom_mat)
+                for poly in obj.data.polygons:
+                    poly.material_index = 0
+
+        self.report({'INFO'}, "Toggle Material executed")
+        return {'FINISHED'}
+
+# Registration and UI code remain unchanged.
+
+# Registration and UI code remain unchanged.
+
+
 # UI Panel with three buttons and a dropdown for custom material
 class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
     bl_label = "Switch Material"
@@ -114,13 +169,13 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
     bl_category = 'Tool'
 
     def draw(self, context):
-        is_first_time = True
         layout = self.layout
         row = layout.row(align=True)
         row.operator("object.original_material", depress=(context.scene.toggle_material_state == 'ORIGINAL'))           
         row.operator("object.white_material", depress=(context.scene.toggle_material_state == 'WHITE'))
         row.operator("object.custom_material", depress=(context.scene.toggle_material_state == 'CUSTOM'))
         layout.prop(context.scene, "custom_material", text="Custom Material")
+        layout.operator("object.toggle_material", icon='MATERIAL')
 
 # Function to dynamically update the material list
 
@@ -132,7 +187,6 @@ def update_custom_material(self, context):
                 obj.data.materials.clear()
                 obj.data.materials.append(custom_mat)
 
-
 def get_material_list(self, context):
     return [(mat.name, mat.name, "Select this material") for mat in bpy.data.materials]
 
@@ -143,18 +197,20 @@ bpy.types.Scene.custom_material = bpy.props.EnumProperty(
 )
 
 # Registration
+
 def register():
     bpy.utils.register_class(OBJECT_OT_original_material)
     bpy.utils.register_class(OBJECT_OT_custom_material)
     bpy.utils.register_class(OBJECT_OT_white_material)
+    bpy.utils.register_class(OBJECT_OT_toggle_material)
     bpy.utils.register_class(VIEW3D_PT_material_toggle_panel)
     bpy.types.Scene.toggle_material_state = bpy.props.StringProperty(default="ORIGINAL")
-
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_original_material)
     bpy.utils.unregister_class(OBJECT_OT_custom_material)
     bpy.utils.unregister_class(OBJECT_OT_white_material)
+    bpy.utils.unregister_class(OBJECT_OT_toggle_material)
     bpy.utils.unregister_class(VIEW3D_PT_material_toggle_panel)
     del bpy.types.Scene.toggle_material_state
     del bpy.types.Scene.custom_material
