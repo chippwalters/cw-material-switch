@@ -190,7 +190,6 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
         row.operator("object.white_material", depress=(context.scene.toggle_material_state == 'WHITE'))
         row.operator("object.custom_material", depress=(context.scene.toggle_material_state == 'CUSTOM'))
         layout.prop(context.scene, "custom_material", text="Custom Material")
-        layout.operator("object.toggle_material", icon='MATERIAL')
 
 def update_custom_material(self, context):
     bpy.ops.object.custom_material()
