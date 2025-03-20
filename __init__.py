@@ -3,7 +3,7 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 21),
+    "version": (1, 0, 22),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
@@ -36,16 +36,9 @@ class OBJECT_OT_original_material(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        #for obj in bpy.data.objects:
-        
         for obj in get_unique_mesh_objects():
-            
-            print(obj.name + " checking\n")
-            
+                        
             if obj.type == 'MESH' and "original_material" in obj and "face_material_indices" in obj:
-                
-                print(obj.name + " mesh and orig mat and face mat indices")
-                print(str(obj.active_material) + " ")
                 
                 for mat_name in obj["original_material"]:
                     mat = bpy.data.materials.get(mat_name)
@@ -60,12 +53,7 @@ class OBJECT_OT_original_material(bpy.types.Operator):
                 for poly, mat_index in zip(obj.data.polygons, obj["face_material_indices"]):
                     poly.material_index = mat_index
                     
-                print(obj.name + " new material")
-                print(str(obj.active_material) + "\n\n")
-
-                
         context.scene.toggle_material_state = 'ORIGINAL'
-        print("FINISHED \n\n\n")
         return {'FINISHED'}
 
 # Operator for Custom Material
@@ -80,10 +68,6 @@ class OBJECT_OT_custom_material(bpy.types.Operator):
         if custom_mat:
             for obj in bpy.data.objects:
                 if obj.type == 'MESH':
-#                    if "_is_override" in obj and obj["_is_override"]:
-#                        continue
-
-
                     if context.scene.toggle_material_state == 'ORIGINAL':
                         obj["original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
                         obj["face_material_indices"] = [poly.material_index for poly in obj.data.polygons]
@@ -112,12 +96,6 @@ class OBJECT_OT_white_material(bpy.types.Operator):
 
         for obj in bpy.data.objects:
             if obj.type == 'MESH':
-#                if "_is_override" in obj and obj["_is_override"]:
-#                    continue
-                
-#                if white_mat and obj.active_material == white_mat:
-#                    print(f"{obj.name} has the white material assigned.")
-#                    continue
                 
                 if context.scene.toggle_material_state == 'ORIGINAL':
                     obj["original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
