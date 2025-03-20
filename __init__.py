@@ -3,7 +3,7 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 10),
+    "version": (1, 0, 12),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
@@ -161,7 +161,6 @@ class OBJECT_OT_toggle_material(bpy.types.Operator):
                     poly.material_index = 0
                 obj["_is_override"] = False
 
-#        print(f"is_override: {obj['_is_override']}")
         self.report({'INFO'}, "Toggle Material executed")
         return {'FINISHED'}
 
@@ -184,43 +183,39 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
         layout.prop(context.scene, "custom_material", text="Custom Material")
         layout.operator("object.toggle_material", icon='MATERIAL')
 
-# Function to dynamically update the material list
-
 def update_custom_material(self, context):
-    custom_mat = bpy.data.materials.get(self.custom_material)
-    if custom_mat:
-        for obj in bpy.data.objects:
-            if obj.type == 'MESH':
-                obj.data.materials.clear()
-                obj.data.materials.append(custom_mat)
+    bpy.ops.object.custom_material()
 
 def get_material_list(self, context):
     return [(mat.name, mat.name, "Select this material") for mat in bpy.data.materials]
-
-bpy.types.Scene.custom_material = bpy.props.EnumProperty(
-    name="Custom Material",
-    items=get_material_list,
-    update=update_custom_material
+    
+# Registration
+classes = (
+    VIEW3D_PT_material_toggle_panel,
+    OBJECT_OT_original_material,
+    OBJECT_OT_custom_material,
+    OBJECT_OT_white_material,
+    OBJECT_OT_toggle_material
 )
 
-# Registration
-
 def register():
-    bpy.utils.register_class(OBJECT_OT_original_material)
-    bpy.utils.register_class(OBJECT_OT_custom_material)
-    bpy.utils.register_class(OBJECT_OT_white_material)
-    bpy.utils.register_class(OBJECT_OT_toggle_material)
-    bpy.utils.register_class(VIEW3D_PT_material_toggle_panel)
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
     bpy.types.Scene.toggle_material_state = bpy.props.StringProperty(default="ORIGINAL")
+    bpy.types.Scene.custom_material = bpy.props.EnumProperty(
+        name="Custom Material",
+        items=get_material_list,
+        update=update_custom_material
+    )
 
 def unregister():
-    bpy.utils.unregister_class(OBJECT_OT_original_material)
-    bpy.utils.unregister_class(OBJECT_OT_custom_material)
-    bpy.utils.unregister_class(OBJECT_OT_white_material)
-    bpy.utils.unregister_class(OBJECT_OT_toggle_material)
-    bpy.utils.unregister_class(VIEW3D_PT_material_toggle_panel)
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+
     del bpy.types.Scene.toggle_material_state
     del bpy.types.Scene.custom_material
+
 
 if __name__ == "__main__":
     register()
