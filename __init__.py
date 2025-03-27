@@ -3,7 +3,7 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 22),
+    "version": (1, 0, 23),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
@@ -18,7 +18,7 @@ def get_unique_mesh_objects():
     processed_meshes = set()  # Track processed mesh data
 
     for obj in bpy.data.objects:
-        if obj.type == 'MESH' and "original_material" in obj and "face_material_indices" in obj:
+        if obj.type == 'MESH' and "alt_original_material" in obj and "alt_faces_material_indices" in obj:
             # Skip instances (linked duplicates) by checking if mesh data is already processed
             if obj.data in processed_meshes:
                 continue
@@ -30,27 +30,27 @@ def get_unique_mesh_objects():
     return unique_objects  # Return the list of unique mesh objects
 
 
-class OBJECT_OT_original_material(bpy.types.Operator):
-    bl_idname = "object.original_material"
+class OBJECT_OT_alt_original_material(bpy.types.Operator):
+    bl_idname = "object.alt_original_material"
     bl_label = "Original"
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
         for obj in get_unique_mesh_objects():
                         
-            if obj.type == 'MESH' and "original_material" in obj and "face_material_indices" in obj:
+            if obj.type == 'MESH' and "alt_original_material" in obj and "alt_faces_material_indices" in obj:
                 
-                for mat_name in obj["original_material"]:
+                for mat_name in obj["alt_original_material"]:
                     mat = bpy.data.materials.get(mat_name)
                     if mat:
                         mat.use_fake_user = False
 
                 obj.data.materials.clear()
-                for mat_name in obj["original_material"]:
+                for mat_name in obj["alt_original_material"]:
                     mat = bpy.data.materials.get(mat_name)
                     if mat:
                         obj.data.materials.append(mat)
-                for poly, mat_index in zip(obj.data.polygons, obj["face_material_indices"]):
+                for poly, mat_index in zip(obj.data.polygons, obj["alt_faces_material_indices"]):
                     poly.material_index = mat_index
                     
         context.scene.toggle_material_state = 'ORIGINAL'
@@ -69,9 +69,9 @@ class OBJECT_OT_custom_material(bpy.types.Operator):
             for obj in bpy.data.objects:
                 if obj.type == 'MESH':
                     if context.scene.toggle_material_state == 'ORIGINAL':
-                        obj["original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
-                        obj["face_material_indices"] = [poly.material_index for poly in obj.data.polygons]
-                        for mat_name in obj["original_material"]:
+                        obj["alt_original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
+                        obj["alt_faces_material_indices"] = [poly.material_index for poly in obj.data.polygons]
+                        for mat_name in obj["alt_original_material"]:
                             mat = bpy.data.materials.get(mat_name)
                             if mat:
                                 mat.use_fake_user = True
@@ -98,9 +98,9 @@ class OBJECT_OT_white_material(bpy.types.Operator):
             if obj.type == 'MESH':
                 
                 if context.scene.toggle_material_state == 'ORIGINAL':
-                    obj["original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
-                    obj["face_material_indices"] = [poly.material_index for poly in obj.data.polygons]
-                    for mat_name in obj["original_material"]:
+                    obj["alt_original_material"] = [slot.material.name for slot in obj.material_slots if slot.material]
+                    obj["alt_faces_material_indices"] = [poly.material_index for poly in obj.data.polygons]
+                    for mat_name in obj["alt_original_material"]:
                         mat = bpy.data.materials.get(mat_name)
                         if mat:
                             mat.use_fake_user = True
@@ -150,7 +150,7 @@ class VIEW3D_PT_material_toggle_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row(align=True)
-        row.operator("object.original_material", depress=(context.scene.toggle_material_state == 'ORIGINAL'))           
+        row.operator("object.alt_original_material", depress=(context.scene.toggle_material_state == 'ORIGINAL'))           
         row.operator("object.white_material", depress=(context.scene.toggle_material_state == 'WHITE'))
         row.operator("object.custom_material", depress=(context.scene.toggle_material_state == 'CUSTOM'))
         layout.prop(context.scene, "custom_material", text="Custom Material")
@@ -164,7 +164,7 @@ def get_material_list(self, context):
 # Registration
 classes = (
     VIEW3D_PT_material_toggle_panel,
-    OBJECT_OT_original_material,
+    OBJECT_OT_alt_original_material,
     OBJECT_OT_custom_material,
     OBJECT_OT_white_material,
 )
