@@ -3,7 +3,7 @@ bl_info = {
     "blender": (4, 3, 0),
     "category": "Tool",
     "author": "Chipp Walters",
-    "version": (1, 0, 23),
+    "version": (1, 0, 24),
     "description": "Toggle between Original, White, and Custom material states with three buttons and a material dropdown."
 }
 
@@ -30,6 +30,7 @@ def get_unique_mesh_objects():
     return unique_objects  # Return the list of unique mesh objects
 
 
+# Operator for Original Material
 class OBJECT_OT_alt_original_material(bpy.types.Operator):
     bl_idname = "object.alt_original_material"
     bl_label = "Original"
@@ -53,11 +54,14 @@ class OBJECT_OT_alt_original_material(bpy.types.Operator):
                 for poly, mat_index in zip(obj.data.polygons, obj["alt_faces_material_indices"]):
                     poly.material_index = mat_index
                     
+                # Remove custom properties
+                del obj["alt_original_material"]
+                del obj["alt_faces_material_indices"]
+
         context.scene.toggle_material_state = 'ORIGINAL'
         return {'FINISHED'}
 
 # Operator for Custom Material
-
 class OBJECT_OT_custom_material(bpy.types.Operator):
     bl_idname = "object.custom_material"
     bl_label = "Custom"
